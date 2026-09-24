@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MNE Mosine — Fase 1 (Hardcore)</title>
+<style>
+:root{
+  --bg:#0a0e14; --panel:#10161f; --border:#7a1f2a; --border2:#2a3542;
+  --text:#d7e2ea; --dim:#6b7f8f; --accent:#ff5f5f; --danger:#ff2d3d; --warn:#f5c542;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+*{box-sizing:border-box;}
+body{
+  margin:0; min-height:100%; background:radial-gradient(circle at 50% 0%,#1c0f10,var(--bg) 60%);
+  color:var(--text); font-family:'Courier New',monospace; display:flex; justify-content:center; padding:16px;
+}
+.wrap{width:100%; max-width:640px;}
+.hud{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:12px; line-height:1.6;}
+.hud .row1{color:var(--accent); font-weight:bold; letter-spacing:1px; margin-bottom:4px;}
+.hud .stats{display:flex; flex-wrap:wrap; gap:10px; color:var(--dim);}
+.hud .stats b{color:var(--text);}
+.timer{color:var(--warn);}
+.timer.low{color:var(--danger); animation:pulse 1s infinite;}
+@keyframes pulse{50%{opacity:.4;}}
+.inv{display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;}
+.slot{border:1px solid var(--border2); border-radius:4px; padding:3px 8px; font-size:11px; color:var(--dim); background:#0d1219;}
+.slot.filled{color:var(--accent); border-color:var(--accent);}
+.story{background:var(--panel); border:1px solid var(--border2); border-radius:8px; padding:18px; font-size:15px; line-height:1.65; white-space:pre-wrap; margin-bottom:16px;}
+.story.gameover{border-color:var(--danger); color:#ffb3ba;}
+.story.win{border-color:var(--warn);}
+.choices{display:flex; flex-direction:column; gap:10px;}
+button.choice{background:#0d1219; border:1px solid var(--border2); color:var(--text); padding:12px 14px; border-radius:6px; font-family:inherit; font-size:14px; text-align:left; cursor:pointer; transition:.15s;}
+button.choice:hover{border-color:var(--accent); color:var(--accent);}
+button.choice:disabled{opacity:.35; cursor:not-allowed; color:var(--dim);}
+button.choice .lock{font-size:11px; display:block; margin-top:3px; color:var(--danger);}
+.buy{display:block; margin-top:14px; background:var(--warn); color:#1a1200; text-align:center; padding:14px; border-radius:6px; font-weight:bold; text-decoration:none; letter-spacing:.5px;}
+.restart{display:block; width:100%; margin-top:6px; background:transparent; border:1px solid var(--border2); color:var(--dim); padding:10px; border-radius:6px; font-family:inherit; cursor:pointer;}
+h1{font-size:12px; letter-spacing:1.5px; color:var(--dim); text-align:center; margin:0 0 4px;}
+h2{font-size:11px; letter-spacing:1px; color:var(--accent); text-align:center; margin:0 0 14px; font-weight:normal;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎮 PROJETO MNE MOSINE — FASE 1</h1>
+<h2>⚠ MODO HARDCORE TÁTICO ⚠</h2>
+<div class="hud" id="hud"></div>
+<div id="storyBox" class="story"></div>
+<div class="choices" id="choices"></div>
+</div>
+
+<script>
+const ITEM_NAMES = {faca:"Faca Prateada", bateria:"Bateria Auxiliar (+25%)", medkit:"Medkit Tático", transmissor:"Transmissor Cripto", chave:"Chave de Criptografia Nível 1"};
+const START = "01.1.1";
+const BUY_LINK = "https://seu-link-de-pagamento.com";
+
+const nodes = {
+
+"01.1.1":{text:`O choque de reinicialização atravessa sua espinha como uma agulha de gelo. A dor queima na base do crânio enquanto o som de estática reverbera dentro do capacete tático. Você abre os olhos devagar: a abóbada acima não tem sol, apenas uma malha trêmula de pixels cinzentos em baixa resolução.
+
+Está de bruços sobre concreto tático rachado, por onde vazam fiações energizadas. Veste o uniforme de assalto do PROJETO MNE MOSINE. Ao seu lado, um fuzil M4 descarregado. Na cintura, uma Faca Prateada de liga condutora.
+
+O bracelete indica: [SINCRONIA NEURAL: 60 TURNOS | INTEGRIDADE: 100%]. À frente, o concreto desmorona numa ravina labiríntica e enevoada de 40 metros. O vapor de óleo queimado dificulta a visão.
+
+Como você decide abordar a navegação da ravina?`,
+gain:["faca"], choices:[
+ {label:"Descida Tática Ancorada (Encosta Norte): fixação lenta em rocha firme", next:"01.1.2"},
+ {label:"Extração de Cabo Energizado: cortar condutor exposto para rapel improvisado", next:"01.1.3"},
+ {label:"Reconhecimento de Posto Cego: explorar escombros do posto militar desmoronado", next:"01.1.4"},
+ {label:"Deslizamento de Velocidade: lançar-se pelas placas de cascalho mineral", next:"01.1.5"},
+]},
+
+"01.1.2":{text:`Cravando a Faca Prateada nas frestas, você desce com extrema precisão. Na metade do trajeto, encontra o chassi retorcido de um drone de reconhecimento. Destrava o compartimento e encontra uma Bateria Auxiliar (+25%) e um Medkit Tático.
+
+Abaixo, a encosta se divide em três plataformas no escuro, sem visibilidade total.
+
+Qual plataforma de descida você seleciona?`,
+gain:["bateria","medkit"], turnsDelta:-3, choices:[
+ {label:"Plataforma com Tubulações de Vapor: ancorar a faca junto aos tubos aquecidos", next:"01.1.6"},
+ {label:"Salto para Placa de Metal Rígida: saltar 3 metros para uma saliência aparentemente estável", next:"01.1.7"},
+ {label:"Desvio pela Gruta Falsa: entrar numa reentrância que promete passagem interna", next:"01.1.8"},
+ {label:"Rapel cego pelos cabos pendentes, sem inspeção prévia", next:"01.1.9"},
+]},
+
+"01.1.3":{text:`Ao cortar o cabo sem isolamento apropriado, um arco elétrico violento derrete a luva tática e queima a pele da sua mão esquerda.
+
+[DANO BIOMÉTRICO: -25% INTEGRIDADE]
+
+Você desce em rapel forçado e chega a uma zona intermediária cheia de entulho. Sente cheiro de combustível e ouve vibrações metálicas estranhas sob os pés.
+
+Como você procede na zona de entulho intermediária?`,
+integrityDelta:-25, choices:[
+ {label:"Passagem sobre Viga Suspensa: equilibrar-se numa viga fina acima do abismo", next:"01.1.10"},
+ {label:"Descer pelo Túnel de Drenagem Escuro, entupido de graxa", next:"01.1.11"},
+ {label:"Atravessar a Fossa de Resíduos Químicos com água ácida até os joelhos", next:"01.1.12"},
+ {label:"Correr pelas Placas de Zinco Soltas, marcha forçada", next:"01.1.13"},
+]},
+
+"01.1.4":{text:`Você explora o posto destruído e encontra o cadáver de um operador MNE. Recupera um Transmissor Cripto (chave digital militar). O gasto de exploração consumiu 10 turnos vitais.
+
+Qual rota de descida você seleciona agora?`,
+gain:["transmissor"], turnsDelta:-10, choices:[
+ {label:"Descida Lenta com Faca Prateada: rota cautelosa ancorada na rocha", next:"01.1.14"},
+ {label:"Ativar Plataforma de Carga com o Transmissor Cripto, no guindaste avariado", next:"01.1.15", requireItem:"transmissor"},
+ {label:"Saltar na Caçamba de Lixo Industrial: 8 metros cego, em direção a entulhos", next:"01.1.16"},
+ {label:"Descida Rápida segurando Cabos de Aço nas palmas das luvas", next:"01.1.17"},
+]},
+
+"01.1.5":{text:`Você se lança em corrida pela encosta. O cascalho cede, expondo uma placa de aço coberta de óleo. Você perde a tração, rola a 40 km/h e choca a cabeça contra o suporte de um gerador. Coluna fraturada.
+
+SISTEMA CORROMPIDO — FALHA CRÍTICA DE TRAVESSIA.
+Causa do óbito: trauma por impacto em alta velocidade.`,
+gameOver:true},
+
+"01.1.6":{text:`Você segue ancorando a faca junto aos tubos aquecidos, sentindo o calor através da lâmina. O metal range sob seu peso, mas resiste. Ao alcançar o fim da tubulação, avista a base da ravina — e, mais perto do que gostaria, o brilho intermitente de sensores óticos patrulhando o pátio abaixo.`,
+choices:[{label:"Descer o último trecho e avançar ao perímetro do complexo →", next:"01.2.1"}]},
+
+"01.1.7":{text:`Você salta os 3 metros calculando a distância no ar. A saliência aguenta seu peso — mal. O metal racha sob as botas, mas segura o suficiente para você alcançar a base da ravina em segurança, ofegante.`,
+choices:[{label:"Avançar ao perímetro do complexo →", next:"01.2.1"}]},
+
+"01.1.8":{text:`A gruta interna não é uma passagem, mas o ninho de descarga de micro-drones defensivos. Dezenas de lâminas rotativas cortam suas artérias antes que você consiga sacar a faca.
+
+SISTEMA CORROMPIDO — DESMEMBRADO POR ENXAME DEFENSIVO.`,
+gameOver:true},
+
+"01.1.9":{text:`Você agarra os cabos pendentes sem inspecioná-los. Um deles, corroído por dentro, se rompe a meio caminho. Sua queda de 15 metros termina sobre um amontoado de vergalhões expostos.
+
+SISTEMA CORROMPIDO — EMPALADO EM ESTRUTURA METÁLICA.
+Causa do óbito: queda livre sobre destroços pontiagudos após ruptura de cabo corroído.`,
+gameOver:true},
+
+"01.1.10":{text:`Você avança sobre a viga fina, um pé de cada vez, o abismo escuro logo abaixo. No ponto médio, a viga vibra com um ruído metálico distante — mas aguenta. Você alcança o outro lado com o coração disparado.`,
+choices:[{label:"Avançar ao perímetro do complexo →", next:"01.2.1"}]},
+
+"01.1.11":{text:`Você entra no duto vertical entupido de graxa, descendo em queda controlada pela superfície escorregadia. A graxa absorve o impacto na base, mas suja completamente seu uniforme e sua visão por alguns segundos críticos.`,
+choices:[{label:"Limpar o visor e avançar ao perímetro →", next:"01.2.1"}]},
+
+"01.1.12":{text:`A água ácida da fossa atravessa o tecido do uniforme em segundos. A pele das suas pernas liquefaz e você fica preso até a parada cardiorrespiratória por contaminação química.
+
+SISTEMA CORROMPIDO — CORROSÃO BIOLÓGICA.`,
+gameOver:true},
+
+"01.1.13":{text:`Você força a marcha sobre as chapas bambas, confiando na velocidade para compensar a instabilidade. Uma placa cede completamente sob seu peso na pior hora possível, e você despenca por um vão de três andares até o concreto abaixo.
+
+SISTEMA CORROMPIDO — QUEDA FATAL POR COLAPSO ESTRUTURAL.`,
+gameOver:true},
+
+"01.1.14":{text:`Você ancora a faca na rocha e desce com cautela redobrada, ciente de que já perdeu 10 turnos preciosos na exploração do posto. A descida é segura, mas lenta — e cada segundo aqui é um segundo a menos lá na frente.`,
+turnsDelta:-4, choices:[{label:"Avançar ao perímetro do complexo →", next:"01.2.1"}]},
+
+"01.1.15":{text:`Você conecta o Transmissor Cripto ao painel do guindaste avariado. Após segundos de processamento, os motores hidráulicos despertam com um rugido enferrujado, baixando uma plataforma de carga diretamente até a base da ravina — a descida mais rápida e segura possível.`,
+choices:[{label:"Descer pela plataforma e avançar ao perímetro →", next:"01.2.1"}]},
+
+"01.1.16":{text:`Você salta os 8 metros cego, contando com a sorte para amortecer a queda em algum monte de entulho macio. Não há sorte: você atinge uma pilha de placas metálicas cortantes empilhadas na caçamba de descarte industrial.
+
+SISTEMA CORROMPIDO — LACERAÇÕES MÚLTIPLAS FATAIS.
+Causa do óbito: impacto contra destroços metálicos cortantes em queda cega.`,
+gameOver:true},
+
+"01.1.17":{text:`Você agarra os cabos de aço com as palmas das luvas, confiando no atrito para controlar a velocidade. O atrito é demais: o calor derrete o revestimento das luvas em segundos, e suas mãos se soltam no pior momento da descida.
+
+SISTEMA CORROMPIDO — QUEDA LIVRE SEM CONTROLE.
+Causa do óbito: perda de aderência por superaquecimento do equipamento de descida.`,
+gameOver:true},
+
+"01.2.1":{text:`Você atinge o pátio de asfalto trincado. O Sentinela de Frequência MK-IV — robô quadrúpede blindado com laser óptico e canhões duplos de plasma — patrulha em giros rápidos. O laser infravermelho varre o piso a cada 4 segundos.
+
+Como você enfrenta o Sentinela de Frequência?`,
+choices:[
+ {label:"Ataque Furtivo na Coluna Central: avançar no ponto cego e cravar a lâmina no processador", next:"01.2.2", requireItem:"faca"},
+ {label:"Sobrecarga de Plasma no Fuzil: usar a bateria para um disparo direcional que cega o sensor", next:"01.2.3", requireItem:"bateria"},
+ {label:"Criar Distração com o Medkit Tático: lançá-lo contra galões de combustível no lado oposto", next:"01.2.4", requireItem:"medkit"},
+ {label:"Investida Frontal com a Faca: correr direto no raio do laser óptico", next:"01.2.5"},
+]},
+
+"01.2.2":{text:`Você destrói o Sentinela sem barulho e extrai do seu peito uma Chave de Criptografia Nível 1. Diante de você, a fachada do galpão industrial oferece diferentes entradas.
+
+Qual ponto de infiltração no galpão você escolhe?`,
+gain:["chave"], choices:[
+ {label:"Portão Principal de Carga: entrar pela porta de aço entreaberta ao nível do solo", next:"01.3.1"},
+ {label:"Tubulação de Descarga de Vapor: subir pelo cano de expiração quente até a galeria", next:"01.3.2"},
+ {label:"Janela Alta de Vidro Blindado Trincado: escalar o suporte e quebrar o vidro", next:"01.2.6"},
+ {label:"Passagem Subterrânea de Cabos Elétricos: rastejar por um fosso energizado", next:"01.2.7"},
+]},
+
+"01.2.3":{text:`A bateria sobrecarrega o cano do M4 num disparo direcional. O feixe cega o sensor óptico do Sentinela, mas a explosão da sobrecarga destrói o fuzil por completo — e a própria bateria se consome no processo.
+
+[PERDA DE ITEM: FUZIL M4 E BATERIA DESTRUÍDOS]
+
+Cego, o Sentinela dispara às cegas em arcos amplos pelo pátio. Você precisa atravessar antes que ele recupere a calibração dos sensores.
+
+Como você atravessa o pátio sob fogo cego?`,
+lose:["bateria"], choices:[
+ {label:"Esperar um padrão de disparo previsível antes de atravessar", next:"01.3.2"},
+ {label:"Correr agora mesmo, entre os disparos, sem esperar padrão nenhum", next:"01.2.3.trap"},
+]},
+
+"01.2.3.trap":{text:`Impaciente, você corre entre os disparos erráticos. Um dos canhões, girando sem controle algum, varre exatamente a linha onde você está.
+
+SISTEMA CORROMPIDO — ELIMINADO POR FOGO ERRÁTICO.`,
+gameOver:true},
+
+"01.2.4":{text:`Ao lançar o Medkit, o robô atira contra o objeto no ar. A explosão atinge seu flanco e você perde equipamento e vitalidade.
+
+[PERDA DE ITEM: MEDKIT E BATERIA DESTRUÍDOS | DANO: -50% INTEGRIDADE]
+
+Você consegue rastejar ferido para dentro da fábrica enquanto o robô varre a área errada.
+
+Como você avança dentro da fábrica, ferido?`,
+lose:["medkit","bateria"], integrityDelta:-50, choices:[
+ {label:"Calha de Descarte de Lixo: atirar-se no duto de dejetos no chão", next:"01.3.3"},
+ {label:"Tentar Operar o Console sem Suprimentos: marchar direto ao painel principal", next:"01.2.8"},
+]},
+
+"01.2.5":{text:`O laser do Sentinela trava no seu peito antes que você dê três passos. Duas rajadas de plasma incineram seu torso instantaneamente.
+
+SISTEMA CORROMPIDO — EMBOSCADA DE PLASMA.`,
+gameOver:true},
+
+"01.2.6":{text:`Você escala o suporte da janela e arremete contra o vidro blindado trincado. O vidro não quebra de forma limpa — estilhaça em lâminas que retalham seus braços e pescoço antes que você consiga se equilibrar na moldura, e você despenca de volta ao pátio, sangrando.
+
+SISTEMA CORROMPIDO — LACERAÇÃO MASSIVA POR VIDRO BLINDADO.
+Causa do óbito: hemorragia por múltiplos cortes profundos seguidos de queda.`,
+gameOver:true},
+
+"01.2.7":{text:`O fosso de cabos continha 10.000 volts sem isolamento. Seu corpo é carbonizado em menos de um segundo.
+
+SISTEMA CORROMPIDO — ARCO DE ALTA VOLTAGEM.`,
+gameOver:true},
+
+"01.2.8":{text:`Sem chave, sem ferramentas e sem suprimentos, você marcha direto ao painel principal na esperança de operá-lo na força bruta. O console detecta a tentativa não autorizada e libera um pulso de choque de contenção através da própria estrutura metálica que você está tocando.
+
+SISTEMA CORROMPIDO — CHOQUE DE CONTENÇÃO DO PAINEL.
+Causa do óbito: eletrocussão por sistema de segurança industrial.`,
+gameOver:true},
+
+"01.3.1":{text:`Você entra no galpão circular de montagem. O Elevador Industrial de Carga desce 50 metros até o Reator Central. O terminal acende em vermelho: [REQUER CREDENCIAL DIGITAL NÍVEL 1 OU SOBRECARGA MANUAL].
+
+Como você opera o terminal de acesso ao subsolo?`,
+choices:[
+ {label:"Acesso Limpo Autorizado: inserir a chave para descida pneumática segura, sem alarme", next:"01.4.1", requireItem:"chave"},
+ {label:"Arrombamento por Ligação Direta: forçar os fios do painel manualmente", next:"01.4.2", requireItem:"faca"},
+ {label:"Saltar na Calha de Resíduos de Aço: lançar o corpo na rampa de descarte, em queda livre no escuro", next:"01.4.3"},
+ {label:"Tentar Invasão de Teclado sem Chave: digitar códigos aleatórios sem permissão no console", next:"01.3.4"},
+]},
+
+"01.3.2":{text:`Você sobe pelo cano de expiração quente, o metal ardendo mesmo através das luvas. No topo, alcança uma galeria estreita suspensa sobre o galpão principal — de onde avista o Elevador Industrial de Carga lá embaixo. A rota mais direta até ele passa por uma passarela de manutenção sem corrimão.`,
+choices:[{label:"Atravessar a passarela e descer até o elevador →", next:"01.3.1"}]},
+
+"01.3.3":{text:`Ferido e sem suprimentos, você se atira no duto de dejetos, deslizando por metros de graxa e resíduo industrial em queda quase livre até o subsolo. O impacto na base é amortecido pelo próprio lodo, mas cada movimento agora dói.`,
+turnsDelta:-6, choices:[{label:"Arrastar-se até a Fossa de Resíduos, único caminho visível →", next:"01.4.3"}]},
+
+"01.3.4":{text:`O terminal detecta a tentativa não autorizada. Duas lâminas mecânicas se acionam a partir da moldura do console, decepando seus dois pulsos. Sangria fatal em 15 segundos.
+
+SISTEMA CORROMPIDO — TRAVA DE SEGURANÇA ANTIBRAÇO.`,
+gameOver:true},
+
+"01.4.1":{text:`O elevador abre no Reator Central. No centro do salão, uma cápsula de vidro reforçado com fluido azul guarda seu corpo humano real em coma. O avatar que você controlou é apenas uma projeção.
+
+Você insere a Chave de Criptografia Nível 1: o fluido começa a ser drenado e os olhos do seu corpo real dentro do cilindro tremem, prestes a abrir no mundo físico...
+
+De repente, uma sirene vermelha dispara no teto e a tela congela sob a trava mestre da Matriz!`,
+endDemo:true, ending:"ROTA PERFEITA TÁTICA"},
+
+"01.4.2":{text:`Você força os fios do painel do elevador com a lâmina da faca, provocando um choque que percorre seu braço inteiro — e destrói a Faca Prateada no processo, os contatos fritos e inúteis.
+
+[PERDA DE ITEM: FACA PRATEADA | DANO: -30% INTEGRIDADE]
+
+O elevador desce em pane, sacudindo violentamente, até abrir direto no Reator Central. Ferido e desarmado, você avista a cápsula do seu corpo real do outro lado do salão — mas um alarme de intrusão forçada já está soando, e as luzes de contenção da Rede Corrompida começam a piscar em vermelho ao seu redor.`,
+lose:["faca"], integrityDelta:-30, endDemo:true, ending:"ROTA DE ARROMBAMENTO FORÇADO"},
+
+"01.4.3":{text:`Você emerge da fossa de resíduos químicos gravemente ferido, o uniforme em farrapos. À sua frente, a porta blindada para as Galerias Subterrâneas da Fase 2 está entreaberta enquanto os alarmes de destruição soam pela instalação inteira!`,
+endDemo:true, ending:"ROTA DE SOBREVIVÊNCIA EXTREMA"},
+};
+
+let state = {};
+function resetState(){ state = {node:START, integrity:100, turns:60, inventory:[], timeLeft:300, timerId:null, over:false}; }
+resetState();
+
+function itemLabel(k){return ITEM_NAMES[k]||k;}
+
+function renderHUD(){
+  const mm = String(Math.floor(state.timeLeft/60)).padStart(2,"0");
+  const ss = String(state.timeLeft%60).padStart(2,"0");
+  const low = state.timeLeft<=60;
+  const slots = [0,1,2,3].map(i=>{
+    const it = state.inventory[i];
+    return `<span class="slot ${it?"filled":""}">${it?itemLabel(it):"Vazio"}</span>`;
+  }).join("");
+  document.getElementById("hud").innerHTML = `
+    <div class="row1">FASE 1 — O DESPERTAR E A REDE CORROMPIDA</div>
+    <div class="stats">
+      <span>Nó: <b>${state.node}</b></span>
+      <span>Turnos: <b>${state.turns}/60</b></span>
+      <span>Integridade: <b>${state.integrity}%</b></span>
+      <span class="timer ${low?"low":""}">⏱ ${mm}:${ss}</span>
+    </div>
+    <div class="inv">${slots}</div>`;
+}
+
+function startTimer(){
+  clearInterval(state.timerId);
+  state.timerId = setInterval(()=>{
+    if(state.over) return;
+    state.timeLeft -= 5;
+    if(state.timeLeft<=0){
+      state.timeLeft=0; renderHUD();
+      clearInterval(state.timerId);
+      showTimeout();
+      return;
+    }
+    renderHUD();
+  },5000);
+}
+
+function showTimeout(){
+  state.over=true;
+  const box = document.getElementById("storyBox");
+  box.className="story gameover";
+  box.textContent = `O tempo se esgota. Luzes de emergência piscam em vermelho intenso e uma voz sintética ecoa: "PROTOCOLO DE CONTENÇÃO ATIVADO — INTRUSO NÃO NEUTRALIZADO." As paredes de metal se fecham ao seu redor, os dutos liberam um gás denso e sua conexão com a Matriz é forçosamente cortada.
+
+SISTEMA CORROMPIDO — FALHA POR TEMPO ESGOTADO.`;
+  document.getElementById("choices").innerHTML = `<button class="restart" onclick="restart()">🔄 Reiniciar do Ponto Zero [01.1.1]</button>`;
+}
+
+function restart(){ resetState(); render(); startTimer(); }
+
+function pickChoice(c){
+  if(c.requireItem && !state.inventory.includes(c.requireItem)) return;
+  if(c.requireAny && !c.requireAny.some(it=>state.inventory.includes(it))) return;
+  state.node = c.next;
+  render();
+}
+
+function render(){
+  const n = nodes[state.node];
+  if(n.integrityDelta) state.integrity = Math.max(0, state.integrity+n.integrityDelta);
+  if(n.turnsDelta) state.turns = Math.max(0, state.turns+n.turnsDelta);
+  else if(!n.gameOver && !n.endDemo && state.node!==START) state.turns = Math.max(0, state.turns-2);
+  if(n.gain) n.gain.forEach(it=>{ if(!state.inventory.includes(it) && state.inventory.length<4) state.inventory.push(it); });
+  if(n.lose) n.lose.forEach(it=>{ state.inventory = state.inventory.filter(x=>x!==it); });
+  if(n.gameOver){ state.integrity = 0; state.turns=0; }
+  if(n.endDemo){ state.turns=Math.max(0,state.turns); }
+
+  renderHUD();
+  const box = document.getElementById("storyBox");
+  box.className = "story" + (n.gameOver?" gameover":"") + (n.endDemo?" win":"");
+  box.textContent = n.text;
+
+  const cDiv = document.getElementById("choices");
+  cDiv.innerHTML = "";
+
+  if(n.gameOver){
+    clearInterval(state.timerId); state.over=true;
+    cDiv.innerHTML = `<button class="restart" onclick="restart()">🔄 Reiniciar do Ponto Zero [01.1.1]</button>`;
+    return;
+  }
+  if(n.endDemo){
+    clearInterval(state.timerId); state.over=true;
+    cDiv.innerHTML = `
+      <div style="text-align:center; color:var(--warn); font-size:13px; margin-bottom:6px;">
+        🔒 FIM DA DEMO GRATUITA — ${n.ending}<br>Progresso salvo no nó ${state.node}.
+      </div>
+      <a class="buy" href="${BUY_LINK}" target="_blank">👉 Liberar Fases 2 e 3 por R$ 8,90</a>
+      <button class="restart" onclick="restart()">🔄 Jogar a demo novamente</button>`;
+    return;
+  }
+
+  n.choices.forEach(c=>{
+    let locked = false, lockLabel = "";
+    if(c.requireItem && !state.inventory.includes(c.requireItem)){ locked=true; lockLabel=itemLabel(c.requireItem); }
+    if(c.requireAny && !c.requireAny.some(it=>state.inventory.includes(it))){ locked=true; lockLabel=c.requireAny.map(itemLabel).join(" ou "); }
+    const btn = document.createElement("button");
+    btn.className="choice";
+    btn.disabled = locked;
+    btn.innerHTML = c.label + (locked?`<span class="lock">🔒 Requer: ${lockLabel}</span>`:"");
+    btn.onclick = ()=>pickChoice(c);
+    cDiv.appendChild(btn);
+  });
+}
+
+render();
+startTimer();
+</script>
+</body>
+</html>
